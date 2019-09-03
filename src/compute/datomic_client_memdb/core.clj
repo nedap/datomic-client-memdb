@@ -87,26 +87,27 @@
     (get (client/db this) k not-found)))
 
 
-(defrecord Client [db-name-as-uri-fn]
+(defrecord Client [db-name-as-uri-fn mangle-db-name-fn]
   client-proto/Client
   (list-databases [_ _]
-    (or (peer/get-database-names (db-name-as-uri-fn "*")) (list)))
+    (or (peer/get-database-names (db-name-as-uri-fn "*"))
+        (list)))
 
-  (connect [client arg-map]
-    (let [db-name (:db-name arg-map)]
-      (if (contains? (set (client/list-databases client {})) db-name)
-        (LocalConnection. (peer/connect (db-name-as-uri-fn db-name)) db-name)
-        (let [msg (format "Unable to find keyfile %s. Make sure that your endpoint and db-name are correct." db-name)]
-          (throw (ex-info msg {:cognitect.anomalies/category :cognitect.anomalies/not-found
-                               :cognitect.anomalies/message  msg}))))))
+  (connect [client {:keys [db-name]}]
+    (if (contains? (set (client/list-databases client {})) (mangle-db-name-fn db-name))
+      (LocalConnection. (peer/connect (db-name-as-uri-fn (mangle-db-name-fn db-name)))
+                        (mangle-db-name-fn db-name))
+      (let [msg (format "Unable to find keyfile %s (mangled %s). Make sure that your endpoint and db-name are correct."
+                        db-name (mangle-db-name-fn db-name))]
+        (throw (ex-info msg {:cognitect.anomalies/category :cognitect.anomalies/not-found
+                             :cognitect.anomalies/message  msg})))))
 
-  (create-database [_ arg-map]
-    (let [db-name (:db-name arg-map)]
-      (peer/create-database (db-name-as-uri-fn db-name)))
+  (create-database [_ {:keys [db-name]}]
+    (peer/create-database (db-name-as-uri-fn (mangle-db-name-fn db-name)))
     true)
 
-  (delete-database [_ arg-map]
-    (peer/delete-database (db-name-as-uri-fn (:db-name arg-map)))
+  (delete-database [_ {:keys [db-name]}]
+    (peer/delete-database (db-name-as-uri-fn (mangle-db-name-fn db-name)))
     true)
 
   Closeable
@@ -125,5 +126,8 @@
   takes :db-name-as-uri-fn which is a function that is passed a db-name and is
   expected to return a Datomic Peer database URI. Note that this function is passed
   a '*' when list-databases is called."
-  [arg-map]
-  (map->Client {:db-name-as-uri-fn (or (:db-name-as-uri-fn arg-map) memdb-uri)}))
+  [{:keys [db-name-as-uri-fn mangle-db-name-fn]
+    :or {db-name-as-uri-fn memdb-uri
+         mangle-db-name-fn identity}}]
+  (map->Client {:db-name-as-uri-fn db-name-as-uri-fn
+                :mangle-db-name-fn mangle-db-name-fn}))
