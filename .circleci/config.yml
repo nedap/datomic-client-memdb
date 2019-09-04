@@ -1,33 +1,69 @@
-version: 2
+version: 2.1
 
-defaults: &defaults
-  working_directory: ~/repo
-  docker:
-  - image: circleci/clojure:tools-deps-1.9.0.381
+commands:
+  setup-env:
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "project.clj" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run: lein with-profile -dev,+ci deps
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "project.clj" }}
+
+executors:
+  lein-executor:
+    docker:
+      # specify the version you desire here
+      - image: circleci/clojure:lein-2.8.1
+
+    working_directory: ~/repo
+
+    environment:
+      LEIN_ROOT: "true"
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
 
 jobs:
   test:
-    <<: *defaults
-
+    executor: lein-executor
     steps:
-    - checkout
-
-    - restore_cache:
-        keys:
-        - project-{{ checksum "deps.edn" }}
-        - project
-
-    - run: clojure -A:test:run-tests
-
-    - save_cache:
-        paths:
-        - ~/.m2
-        - ~/.gitlibs
-        - ./.cpcache
-        key: project-{{ checksum "deps.edn" }}
+      - setup-env
+      - run: lein test
+  deploy:
+    executor: lein-executor
+    steps:
+      - setup-env
+      - run:
+          name: import GPG key
+          command: echo -e "$GPG_KEY_V2" | gpg --import
+      - run:
+          name: Perform pre-release sanity check
+          command: lein with-profile -dev,+ci run -m nedap.ci.release-workflow.api sanity-check
+      - run:
+          name: release to JFrog
+          command: lein deploy
 
 workflows:
-  version: 2
-  ci-workflow:
+  build:
     jobs:
-    - test
+      - test:
+          context: JFrog
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-alpha\d+)?$/
+      - deploy:
+          context: JFrog
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-alpha\d+)?$/
+          requires:
+            - test

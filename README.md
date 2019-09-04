@@ -1,14 +1,17 @@
 # datomic-client-memdb
 
-[![CircleCI](https://circleci.com/gh/ComputeSoftware/datomic-client-memdb.svg?style=svg)](https://circleci.com/gh/ComputeSoftware/datomic-client-memdb)
+[![CircleCI](https://circleci.com/gh/nedap/datomic-client-memdb.svg?style=svg)](https://circleci.com/gh/ComputeSoftware/datomic-client-memdb)
+
+_This is a fork of [ComputeSoftware/datomic-client-memdb](https://github.com/ComputeSoftware/datomic-client-memdb), 
+please consider upstreaming changes that could benefit us all._
 
 Datomic Client protocols for Datomic Peer databases.
 
 ## Installation
 
+Add to your project.clj:
 ```clojure
-compute/datomic-client-memdb {:git/url "https://github.com/ComputeSoftware/datomic-client-memdb.git"
-                              :sha     "<most recent SHA>"}
+[com.nedap.staffing-solutions/datomic-client-memdb "0.2.1"]
 ```
 
 ## Usage
