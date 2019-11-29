@@ -86,6 +86,9 @@
   (with-db [this]
     (client/db this))
 
+  (sync [this t]
+    (peer/sync this t))
+
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
