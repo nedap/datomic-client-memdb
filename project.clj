@@ -1,4 +1,4 @@
-(defproject com.nedap.staffing-solutions/datomic-client-memdb "0.4.0-alpha1"
+(defproject com.nedap.staffing-solutions/datomic-client-memdb "0.4.0-alpha2"
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [com.datomic/client "0.8.69"]
                  [com.datomic/datomic-free "0.9.5697"]]
