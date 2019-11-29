@@ -80,14 +80,14 @@
     (-> @(peer/transact conn (:tx-data arg-map))
         (update-vals #{:db-before :db-after} #(LocalDb. % db-name))))
 
+  (sync [this t]
+    (peer/sync conn t))
+
   (tx-range [_ arg-map]
     (peer/tx-range (peer/log conn) (:start arg-map) (:end arg-map)))
 
   (with-db [this]
     (client/db this))
-
-  (sync [this t]
-    (peer/sync this t))
 
   clojure.lang.ILookup
   (valAt [this k]
