@@ -11,7 +11,7 @@ Datomic Client protocols for Datomic Peer databases.
 
 Add to your project.clj:
 ```clojure
-[com.nedap.staffing-solutions/datomic-client-memdb "0.4.0-alpha2"]
+[com.nedap.staffing-solutions/datomic-client-memdb "0.4.0-alpha3"]
 ```
 
 ## Usage
