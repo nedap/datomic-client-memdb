@@ -81,7 +81,7 @@
         (update-vals #{:db-before :db-after} #(LocalDb. % db-name))))
 
   (sync [_ t]
-    @(peer/sync conn t))
+    (LocalDb. @(peer/sync conn t) db-name))
 
   (tx-range [_ arg-map]
     (peer/tx-range (peer/log conn) (:start arg-map) (:end arg-map)))
