@@ -80,6 +80,9 @@
     (-> @(peer/transact conn (:tx-data arg-map))
         (update-vals #{:db-before :db-after} #(LocalDb. % db-name))))
 
+  (sync [_ t]
+    (LocalDb. @(peer/sync conn t) db-name))
+
   (tx-range [_ arg-map]
     (peer/tx-range (peer/log conn) (:start arg-map) (:end arg-map)))
 
