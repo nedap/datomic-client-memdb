@@ -1,9 +1,11 @@
 (ns compute.datomic-client-memdb.core
   (:require
+    [clojure.core.async :as async]
+    [datomic.api :as peer]
     [datomic.client.api :as client]
     [datomic.client.api.protocols :as client-proto]
     [datomic.client.api.impl :as client-impl]
-    [datomic.api :as peer])
+    [datomic.client.impl.shared.protocols :as shared.protocols])
   (:import (java.io Closeable)))
 
 (defn- update-vals [m ks f]
@@ -71,6 +73,11 @@
       not-found)))
 
 
+(defn wrap-async [x]
+  (let [c (async/chan)]
+    (async/put! c x)
+    c))
+
 (deftype LocalConnection [conn db-name]
   client-proto/Connection
   (db [_]
@@ -94,6 +101,11 @@
     (.valAt this k nil))
   (valAt [this k not-found]
     (get (client/db this) k not-found)))
+
+(extend-type LocalConnection
+  shared.protocols/Connection
+  (tx-range [this arg-map]
+    (wrap-async (client/tx-range this arg-map))))
 
 
 (defrecord Client [db-name-as-uri-fn nonce]
