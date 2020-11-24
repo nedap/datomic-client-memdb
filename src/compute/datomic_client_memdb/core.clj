@@ -68,6 +68,9 @@
       :t (peer/basis-t db)
       :next-t (inc (:t this))
       :db-name db-name
+      :as-of (peer/as-of-t db)
+      :since (peer/since-t db)
+      :history (boolean (or (peer/as-of-t db) (peer/since-t db)))
       not-found)))
 
 
